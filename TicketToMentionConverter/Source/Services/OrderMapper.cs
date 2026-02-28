@@ -7,6 +7,7 @@ public static class OrderMapper
         return rows.Select(ticketRow => new OrderItemData
         {
             TicketNumber = ticketRow.TicketNumber,
+            TicketTitle =  ticketRow.TicketTitle,
             TechnicianName = ticketRow.TechnicianName,
             ArticleName = ticketRow.ArticleName,
             ServiceDate = ticketRow.ServiceDate,

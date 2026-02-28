@@ -3,6 +3,7 @@ namespace TicketToMentionConverter;
 public record OrderItemData
 {
     public string TicketNumber { get; init; }
+    public string TicketTitle { get; init; }
     public string TechnicianName { get; init; }
     public string ArticleName { get; init; }
     public DateTime ServiceDate { get; init; }

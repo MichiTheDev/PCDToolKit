@@ -17,7 +17,7 @@ public static class UdxTextBuilder
                 Datum: {item.ServiceDate:dd.MM.yyyy} {item.StartTime} - {item.EndTime}
                 {totalTimeDisplay} {item.TotalTime}
                 -----------------------------------
-                Dokumentation:
+                {item.TicketTitle}
                 {item.Documentation}
                 """;
     }

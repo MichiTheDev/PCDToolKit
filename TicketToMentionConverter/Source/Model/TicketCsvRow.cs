@@ -7,6 +7,9 @@ public record TicketCsvRow
     [Name("Ticketnummer")]
     public string TicketNumber { get; init; }
     
+    [Name("Tickettitel")]
+    public string TicketTitle { get; init; }
+    
     [Name("Techniker:in")]
     public string TechnicianName { get; init; }
     
