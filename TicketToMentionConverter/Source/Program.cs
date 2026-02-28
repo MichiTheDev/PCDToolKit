@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TicketToMentionConverter.Services;
 
@@ -9,18 +8,10 @@ internal class Program
 {
     public static void Main(string[] args)
     {
-        const string configPath = @"C:\ProgramData\PCD\TicketToMentionConverter\appsettings.json";
-
         Host.CreateDefaultBuilder(args)
             .UseWindowsService(options =>
             {
                 options.ServiceName = "TicketToMentionConverter";
-            })
-            .ConfigureAppConfiguration((context, config) =>
-            {
-                config.Sources.Clear();
-
-                config.AddJsonFile(configPath, optional: false, reloadOnChange: true);
             })
             .ConfigureServices((context, services) =>
             {

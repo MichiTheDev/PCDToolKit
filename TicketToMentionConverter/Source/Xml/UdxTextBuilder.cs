@@ -4,13 +4,19 @@ public static class UdxTextBuilder
 {
     public static string Build(OrderItemData item)
     {
+        string totalTimeDisplay = "Geleistete Stunden:";
+        if (item.TotalTime.Contains("Km") || item.TotalTime.Contains("km"))
+        {
+            totalTimeDisplay = "Gefahrene Kilometer:";
+        }
+        
         return $"""
                 Ticket Nr.: {item.TicketNumber}
                 {item.TechnicianName}
                 {item.ArticleName}
                 -----------------------------------
                 Datum: {item.ServiceDate:dd.MM.yyyy} {item.StartTime} - {item.EndTime}
-                Geleistete Stunden: {item.TotalTime}
+                {totalTimeDisplay} {item.TotalTime}
                 -----------------------------------
                 Dokumentation:
                 {item.Documentation}

@@ -37,11 +37,11 @@ public static class FolderProcessor
             if (rows.Count == 0) 
                 throw new Exception("CSV is empty.");
 
-            // 2) ORDER: OrderId = first ticket number
+            // 2) ORDER: OrderId = first number of file (adding + 0000 because of customers wish)
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
-            string orderId = fileName.Split(" - ")[0];
+            string orderId = fileName.Split(" - ")[0] + "0000";
 
-            // Checking for multiple customers (it's not valid)
+            // Checking for multiple customers (it's not valid to have more than 1 customer in 1 .csv)
             List<string> customers = rows.Select(row => row.CustomerNumber).Distinct().ToList();
             if (customers.Count != 1) 
                 throw new Exception($"CSV has multiple customers: {string.Join(", ", customers)}");
@@ -61,8 +61,19 @@ public static class FolderProcessor
 
             List<OrderItemData> items = OrderMapper.Map(rows);
             int lineId = 1;
-            foreach (var item in items)
-                itemList.Add(OrderItemBuilder.Create(lineId++, item));
+            OrderItemData previousItem = null;
+            foreach (OrderItemData item in items)
+            {
+                bool shouldSkipUdx = false;
+                if (previousItem is not null)
+                {
+                    shouldSkipUdx = previousItem.Price == item.Price * -1 
+                                    && previousItem.Documentation.Equals(item.Documentation);
+                }
+                
+                itemList.Add(OrderItemBuilder.Create(lineId++, item, shouldSkipUdx));
+                previousItem = item;
+            }
 
             // 4) Generate file names (unique)
             string baseName = $"{orderId}_{DateTime.Now:yyyyMMdd_HHmmss}_{ShortHash(csvPath)}";

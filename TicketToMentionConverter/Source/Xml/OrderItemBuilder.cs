@@ -4,7 +4,7 @@ namespace TicketToMentionConverter;
 
 public class OrderItemBuilder
 {
-    public static XElement Create(int lineId, OrderItemData item)
+    public static XElement Create(int lineId, OrderItemData item, bool skipUdx)
     {
         return new XElement(Namespaces.OpenTrans + "ORDER_ITEM",
 
@@ -28,8 +28,12 @@ public class OrderItemBuilder
 
             new XElement(Namespaces.OpenTrans + "PRICE_LINE_AMOUNT", item.Price * item.Quantity),
             
+            new XElement(Namespaces.OpenTrans + "REMARK", new XAttribute("type", "general"),
+                $"eppueber=Ticket Nr. {item.TicketNumber}"
+            ),
+            
             new XElement(Namespaces.OpenTrans + "ITEM_UDX",
-                new XElement("UDX.MENTION.BPPTEXT", new XCData(UdxTextBuilder.Build(item)))
+                new XElement("UDX.MENTION.BPPTEXT", skipUdx ? "" : new XCData(UdxTextBuilder.Build(item)))
             )
         );
     }
