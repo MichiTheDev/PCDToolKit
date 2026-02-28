@@ -11,7 +11,6 @@ public static class UdxTextBuilder
         }
         
         return $"""
-                Ticket Nr.: {item.TicketNumber}
                 {item.TechnicianName}
                 {item.ArticleName}
                 -----------------------------------

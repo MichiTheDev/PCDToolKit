@@ -5,6 +5,7 @@ public record MentionSettings
     public string Language { get; init; }
     public string Currency { get; init; }
     public PartySettings Supplier { get; init; }
+    public string DeductionArticleId { get; init; }
 }
 
 public record PartySettings

@@ -14,19 +14,19 @@ public static class FolderProcessor
         Directory.CreateDirectory(folders.Backup);
     }
     
-    public static void ProcessOnce(FolderSettings folders, MentionSettings mention)
+    public static void ProcessOnce(FolderSettings folderSettings, MentionSettings mentionSettings)
     {
-        List<string> csvFiles = Directory.EnumerateFiles(folders.Input, "*.csv", SearchOption.TopDirectoryOnly)
+        List<string> csvFiles = Directory.EnumerateFiles(folderSettings.Input, "*.csv", SearchOption.TopDirectoryOnly)
             .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         foreach (string csvPath in csvFiles)
         {
-            ProcessSingleCsv(csvPath, folders, mention);
+            ProcessSingleCsv(csvPath, folderSettings, mentionSettings);
         }
     }
     
-    private static void ProcessSingleCsv(string csvPath, FolderSettings folders, MentionSettings mention)
+    private static void ProcessSingleCsv(string csvPath, FolderSettings folderSettings, MentionSettings mentionSettings)
     {
         if (!IsFileReady(csvPath)) return;
 
@@ -39,7 +39,7 @@ public static class FolderProcessor
 
             // 2) ORDER: OrderId = first number of file (adding + 0000 because of customers wish)
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
-            string orderId = fileName.Split(" - ")[0] + "0000";
+            string orderId = $"LN-Nr. {fileName.Split(" - ")[0]}";
 
             // Checking for multiple customers (it's not valid to have more than 1 customer in 1 .csv)
             List<string> customers = rows.Select(row => row.CustomerNumber).Distinct().ToList();
@@ -54,7 +54,7 @@ public static class FolderProcessor
             };
 
             // 3) Build XML Document
-            XElement headerElement = OrderHeaderBuilder.Build(header, mention);
+            XElement headerElement = OrderHeaderBuilder.Build(header, mentionSettings);
             XDocument document  = OrderRootBuilder.Create(headerElement);
 
             XElement itemList = document.Descendants(Namespaces.OpenTrans + "ORDER_ITEM_LIST").First();
@@ -67,8 +67,13 @@ public static class FolderProcessor
                 bool shouldSkipUdx = false;
                 if (previousItem is not null)
                 {
-                    shouldSkipUdx = previousItem.Price == item.Price * -1 
-                                    && previousItem.Documentation.Equals(item.Documentation);
+                    shouldSkipUdx = previousItem.Price == item.Price * -1;
+
+                    // PCD want a different article id for this case
+                    if (shouldSkipUdx)
+                    {
+                        item.MentionArticleId = mentionSettings.DeductionArticleId;
+                    }
                 }
                 
                 itemList.Add(OrderItemBuilder.Create(lineId++, item, shouldSkipUdx));
@@ -77,8 +82,8 @@ public static class FolderProcessor
 
             // 4) Generate file names (unique)
             string baseName = $"{orderId}_{DateTime.Now:yyyyMMdd_HHmmss}_{ShortHash(csvPath)}";
-            string outXmlPath = Path.Combine(folders.Output, baseName + ".xml");
-            string backupXmlPath = Path.Combine(folders.Backup, baseName + ".xml");
+            string outXmlPath = Path.Combine(folderSettings.Output, baseName + ".xml");
+            string backupXmlPath = Path.Combine(folderSettings.Backup, baseName + ".xml");
 
             // 5) Saving + Backup
             document.Save(outXmlPath);

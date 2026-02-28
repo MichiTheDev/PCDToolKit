@@ -14,7 +14,7 @@ public record OrderItemData
     public decimal Quantity { get; init; } = 1;
     public string Documentation { get; init; }
     public decimal Price { get; init; }
-    public string MentionArticleId { get; init; }
+    public string MentionArticleId { get; set; }
     
     public string CustomerNumber { get; init; }
 }

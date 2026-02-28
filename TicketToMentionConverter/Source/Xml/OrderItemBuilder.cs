@@ -33,7 +33,7 @@ public class OrderItemBuilder
             ),
             
             new XElement(Namespaces.OpenTrans + "ITEM_UDX",
-                new XElement("UDX.MENTION.BPPTEXT", skipUdx ? "" : new XCData(UdxTextBuilder.Build(item)))
+                new XElement("UDX.MENTION.BPPTEXT", skipUdx ? item.Documentation : new XCData(UdxTextBuilder.Build(item)))
             )
         );
     }
