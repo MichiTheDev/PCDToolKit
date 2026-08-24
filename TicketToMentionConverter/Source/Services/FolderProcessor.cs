@@ -67,7 +67,7 @@ public static class FolderProcessor
                 bool shouldSkipUdx = false;
                 if (previousItem is not null)
                 {
-                    shouldSkipUdx = previousItem.Price > 0 && item.Price < 0;
+                    shouldSkipUdx = previousItem.Quantity > 0 && item.Quantity < 0;
 
                     // PCD want a different article id for this case
                     if (shouldSkipUdx)
