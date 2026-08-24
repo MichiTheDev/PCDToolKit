@@ -12,48 +12,49 @@ set "BASE_DIR=%~dp0"
 set "BASE_DIR=%BASE_DIR:~0,-1%"
 set "EXE_NAME=TicketToMentionConverter.exe"
 
-set "CONFIG_DIR=%BASE_DIR%"
-set "CONFIG_FILE=%CONFIG_DIR%\appsettings.json"
+set "CONFIG_FILE=%BASE_DIR%\appsettings.json"
 
-set "DROP_IN=C:\Drop\In"
-set "DROP_OUT=C:\Drop\Out"
-set "DROP_BACKUP=C:\Drop\Backup"
+REM Arbeitsordner liegen neben der .exe. Wer sie woanders haben will,
+REM traegt in der appsettings.json absolute Pfade ein - die haben Vorrang.
+set "DROP_IN=%BASE_DIR%\Input"
+set "DROP_OUT=%BASE_DIR%\Output"
+set "DROP_BACKUP=%BASE_DIR%\Backup"
 
 echo.
 echo =============================================
 echo   TicketToMentionConverter Service Setup
 echo =============================================
 echo.
+echo Installationsordner: %BASE_DIR%
+echo.
 
 REM === ADMIN CHECK ===
 net session >nul 2>&1
 if errorlevel 1 (
-  echo ERROR: Please run this script as Administrator.
+  echo ERROR: Bitte dieses Skript als Administrator ausfuehren.
+  pause
+  exit /b 1
+)
+
+REM === CHECK EXE EXISTS ===
+if not exist "%BASE_DIR%\%EXE_NAME%" (
+  echo ERROR: EXE nicht gefunden:
+  echo   %BASE_DIR%\%EXE_NAME%
+  echo Bitte zuerst die veroeffentlichte EXE hierher kopieren.
   pause
   exit /b 1
 )
 
 REM === CREATE DIRECTORIES ===
-echo [1/6] Creating directories...
-mkdir "%BASE_DIR%" 2>nul
-mkdir "%CONFIG_DIR%" 2>nul
+echo [1/6] Ordner anlegen...
 mkdir "%DROP_IN%" 2>nul
 mkdir "%DROP_OUT%" 2>nul
 mkdir "%DROP_BACKUP%" 2>nul
 
-REM === CHECK EXE EXISTS ===
-if not exist "%BASE_DIR%\%EXE_NAME%" (
-  echo ERROR: EXE not found at:
-  echo   %BASE_DIR%\%EXE_NAME%
-  echo Please copy the published EXE first.
-  pause
-  exit /b 1
-)
-
 REM === CREATE DEFAULT CONFIG IF NOT EXISTING ===
-echo [2/6] Checking configuration...
+echo [2/6] Konfiguration pruefen...
 if not exist "%CONFIG_FILE%" (
-  echo Creating default appsettings.json...
+  echo Standard appsettings.json wird erstellt...
   >"%CONFIG_FILE%" (
     echo {
     echo   "Mention": {
@@ -63,9 +64,9 @@ if not exist "%CONFIG_FILE%" (
     echo     "DeductionArticleId": ""
     echo   },
     echo   "Folders": {
-    echo     "Input": "%DROP_IN:\=\\%",
-    echo     "Output": "%DROP_OUT:\=\\%",
-    echo     "Backup": "%DROP_BACKUP:\=\\%"
+    echo     "Input": "Input",
+    echo     "Output": "Output",
+    echo     "Backup": "Backup"
     echo   },
     echo   "Processing": {
     echo     "ScanIntervalSeconds": 5
@@ -73,52 +74,64 @@ if not exist "%CONFIG_FILE%" (
     echo }
   )
 ) else (
-  echo Configuration already exists. Skipping creation.
+  echo Konfiguration existiert bereits. Wird nicht ueberschrieben.
 )
 
 REM === SET PERMISSIONS FOR WINDOWS SERVICE ===
-echo [3/6] Setting NTFS permissions for SYSTEM account...
-icacls "%DROP_IN%" /grant "SYSTEM:(OI)(CI)F" >nul
-icacls "%DROP_OUT%" /grant "SYSTEM:(OI)(CI)F" >nul
-icacls "%DROP_BACKUP%" /grant "SYSTEM:(OI)(CI)F" >nul
-icacls "%CONFIG_DIR%" /grant "SYSTEM:(OI)(CI)F" >nul
+REM Der Dienst laeuft als LocalSystem und braucht Zugriff auf .exe, Config und Ordner.
+echo [3/6] NTFS-Rechte fuer SYSTEM setzen...
+icacls "%BASE_DIR%" /grant "SYSTEM:(OI)(CI)F" /T >nul
 
 REM === CREATE OR UPDATE SERVICE ===
-echo [4/6] Installing/updating Windows service...
+echo [4/6] Windows-Dienst installieren/aktualisieren...
 sc query "%SERVICE_NAME%" >nul 2>&1
 if %errorlevel%==0 (
-  echo Service already exists. Updating...
+  echo Dienst existiert bereits. Wird aktualisiert...
   sc stop "%SERVICE_NAME%" >nul 2>&1
-  timeout /t 2 /nobreak >nul
+  timeout /t 3 /nobreak >nul
   sc config "%SERVICE_NAME%" binPath= "\"%BASE_DIR%\%EXE_NAME%\"" start= auto DisplayName= "%DISPLAY_NAME%" >nul
 ) else (
-  echo Creating new service...
+  echo Neuer Dienst wird erstellt...
   sc create "%SERVICE_NAME%" binPath= "\"%BASE_DIR%\%EXE_NAME%\"" start= auto DisplayName= "%DISPLAY_NAME%" >nul
+)
+if errorlevel 1 (
+  echo ERROR: Dienst konnte nicht registriert werden.
+  pause
+  exit /b 1
 )
 
 REM === ALLOW USER TO EDIT CONFIG ===
 echo.
-echo [5/6] Please review and edit the configuration file now:
+echo [5/6] Konfiguration jetzt pruefen und ggf. anpassen:
 echo   %CONFIG_FILE%
 echo.
-start "" notepad "%CONFIG_FILE%"
+start "" /wait notepad "%CONFIG_FILE%"
 
-set /p ANSWER=Type Y and press ENTER when configuration is ready (or anything else to cancel): 
+set /p ANSWER=Y eingeben und ENTER, wenn die Konfiguration passt (alles andere bricht ab):
 
 if /i not "%ANSWER%"=="Y" (
-  echo Setup finished. Service NOT started.
-  echo You can start manually using:
-  echo   sc start "%SERVICE_NAME%"
+  echo Setup beendet. Dienst wurde NICHT gestartet.
+  echo Spaeter starten mit: start-service.bat
   pause
   exit /b 0
 )
 
 REM === START SERVICE ===
-echo [6/6] Starting service...
-sc start "%SERVICE_NAME%"
+echo [6/6] Dienst starten...
+sc start "%SERVICE_NAME%" >nul
+if errorlevel 1 (
+  echo ERROR: Dienst konnte nicht gestartet werden.
+  echo Details in der Ereignisanzeige ^> Windows-Protokolle ^> Anwendung.
+  pause
+  exit /b 1
+)
+
+timeout /t 2 /nobreak >nul
+sc query "%SERVICE_NAME%" | find "STATE"
 
 echo.
-echo Setup complete.
-echo Logs can be found in Windows Event Viewer ^> Application.
+echo Setup abgeschlossen.
+echo Eingangsordner: %DROP_IN%
+echo Logs: Ereignisanzeige ^> Windows-Protokolle ^> Anwendung
 pause
 exit /b 0

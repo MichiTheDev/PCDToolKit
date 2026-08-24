@@ -9,6 +9,9 @@ internal class Program
     public static void Main(string[] args)
     {
         Host.CreateDefaultBuilder(args)
+            // Ohne das sucht ein Direktstart die appsettings.json im Arbeitsverzeichnis
+            // statt neben der .exe. Als Dienst ist das Arbeitsverzeichnis System32.
+            .UseContentRoot(AppContext.BaseDirectory)
             .UseWindowsService(options =>
             {
                 options.ServiceName = "TicketToMentionConverter";

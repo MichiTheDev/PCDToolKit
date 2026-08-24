@@ -27,6 +27,9 @@
       <None Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <!-- Service-Skripte und Anleitung gehoeren ins Publish-Ergebnis, sonst fehlen sie im ZIP -->
+      <Content Include="*.bat" CopyToOutputDirectory="Always" />
+      <Content Include="README.txt" CopyToOutputDirectory="Always" />
     </ItemGroup>
     
 </Project>

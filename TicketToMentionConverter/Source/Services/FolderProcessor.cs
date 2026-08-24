@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 using TicketToMentionConverter.Csv;
 
 namespace TicketToMentionConverter.Services;
@@ -14,7 +15,7 @@ public static class FolderProcessor
         Directory.CreateDirectory(folders.Backup);
     }
     
-    public static void ProcessOnce(FolderSettings folderSettings, MentionSettings mentionSettings)
+    public static void ProcessOnce(FolderSettings folderSettings, MentionSettings mentionSettings, ILogger logger)
     {
         List<string> csvFiles = Directory.EnumerateFiles(folderSettings.Input, "*.csv", SearchOption.TopDirectoryOnly)
             .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
@@ -22,11 +23,11 @@ public static class FolderProcessor
 
         foreach (string csvPath in csvFiles)
         {
-            ProcessSingleCsv(csvPath, folderSettings, mentionSettings);
+            ProcessSingleCsv(csvPath, folderSettings, mentionSettings, logger);
         }
     }
-    
-    private static void ProcessSingleCsv(string csvPath, FolderSettings folderSettings, MentionSettings mentionSettings)
+
+    private static void ProcessSingleCsv(string csvPath, FolderSettings folderSettings, MentionSettings mentionSettings, ILogger logger)
     {
         if (!IsFileReady(csvPath)) return;
 
@@ -94,7 +95,10 @@ public static class FolderProcessor
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ERROR: {Path.GetFileName(csvPath)}: {ex.Message}");
+            // ponytail: fehlerhafte CSV bleibt im Input liegen und wird jeden Scan neu
+            // versucht, das Event Log wiederholt sich. Falls das stoert: nach Fehler in
+            // einen Error-Unterordner verschieben.
+            logger.LogError(ex, "CSV konnte nicht verarbeitet werden: {File}", Path.GetFileName(csvPath));
         }
     }
 

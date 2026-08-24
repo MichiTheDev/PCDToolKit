@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace TicketToMentionConverter.Services;
@@ -6,7 +7,8 @@ namespace TicketToMentionConverter.Services;
 public class TicketToMentionService(
     IOptionsMonitor<MentionSettings> mention,
     IOptionsMonitor<FolderSettings> folders,
-    IOptionsMonitor<ProcessingSettings> processing)
+    IOptionsMonitor<ProcessingSettings> processing,
+    ILogger<TicketToMentionService> logger)
     : BackgroundService
 {
     private readonly SemaphoreSlim executionLock = new(1, 1);
@@ -14,7 +16,11 @@ public class TicketToMentionService(
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
-        FolderProcessor.EnsureDirectories(folders.CurrentValue);
+        FolderSettings current = folders.CurrentValue;
+        logger.LogInformation("Ordner: Input={Input}, Output={Output}, Backup={Backup}",
+            current.Input, current.Output, current.Backup);
+
+        FolderProcessor.EnsureDirectories(current);
 
         folders.OnChange(FolderProcessor.EnsureDirectories);
         
@@ -34,11 +40,12 @@ public class TicketToMentionService(
             {
                 try
                 {
-                    FolderProcessor.ProcessOnce(folders.CurrentValue, mention.CurrentValue);
+                    FolderProcessor.ProcessOnce(folders.CurrentValue, mention.CurrentValue, logger);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    // Als Dienst gibt es keine Konsole: Fehler muessen ins Event Log.
+                    logger.LogError(ex, "Verarbeitung fehlgeschlagen");
                 }
                 finally
                 {
