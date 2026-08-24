@@ -12,9 +12,16 @@ Installation Guide:
 
 Update Guide:
 
-1. Fuehre stop-service.bat aus
-2. Ersetze die .exe Datei aus dem Aktuellen Update
-3. Fuehre start-Service.bat aus
+Variante A (update.bat):
+1. Neue .exe und update.bat in einen SEPARATEN Ordner legen
+   (nicht in den Installationsordner)
+2. TARGET_DIR in update.bat auf den Installationsordner setzen
+3. update.bat als Administrator ausfuehren
+
+Variante B (manuell):
+1. Fuehre stop-service.bat als Administrator aus
+2. Ersetze die .exe Datei aus dem aktuellen Update
+3. Fuehre start-service.bat als Administrator aus
 
 ==================
 

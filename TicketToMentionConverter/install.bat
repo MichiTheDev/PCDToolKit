@@ -127,7 +127,7 @@ if errorlevel 1 (
 )
 
 timeout /t 2 /nobreak >nul
-sc query "%SERVICE_NAME%" | find "STATE"
+sc query "%SERVICE_NAME%" | findstr /c:"STATE" /c:"ZUSTAND"
 
 echo.
 echo Setup abgeschlossen.

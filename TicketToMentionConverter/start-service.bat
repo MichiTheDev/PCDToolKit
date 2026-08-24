@@ -10,5 +10,5 @@ if errorlevel 1 (
 
 sc start "%SERVICE_NAME%"
 timeout /t 2 /nobreak >nul
-sc query "%SERVICE_NAME%" | find "STATE"
+sc query "%SERVICE_NAME%" | findstr /c:"STATE" /c:"ZUSTAND"
 pause
