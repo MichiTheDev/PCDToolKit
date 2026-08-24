@@ -13,6 +13,9 @@
         <PublishReadyToRun>false</PublishReadyToRun>
 
         <InvariantGlobalization>false</InvariantGlobalization>
+
+        <!-- Release-Publish soll nur die .exe ausspucken, keine .pdb -->
+        <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     </PropertyGroup>
 
     <ItemGroup>

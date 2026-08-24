@@ -59,7 +59,8 @@ if not exist "%CONFIG_FILE%" (
     echo   "Mention": {
     echo     "Language": "ger",
     echo     "Currency": "EUR",
-    echo     "Supplier": { "Id": "PCD", "IdType": "buyer_specific" }
+    echo     "Supplier": { "Id": "PCD", "IdType": "buyer_specific" },
+    echo     "DeductionArticleId": ""
     echo   },
     echo   "Folders": {
     echo     "Input": "%DROP_IN:\=\\%",
